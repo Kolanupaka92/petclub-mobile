@@ -1,0 +1,26 @@
+{
+  "expo": {
+    "name": "PETclub",
+    "slug": "petclub-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "backgroundColor": "#f97316"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "in.petclub.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#f97316"
+      },
+      "package": "in.petclub.app"
+    },
+    "web": {
+      "bundler": "metro"
+    }
+  }
+}

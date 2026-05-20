@@ -6,11 +6,15 @@ import {
 import { api, saveToken } from '../api';
 
 const ORANGE = '#f97316';
-const DEMO_PHONE = '9876543210';
+const COUNTRIES = [
+  { code: '91', flag: '🇮🇳', label: 'India', demo: '9876543210' },
+  { code: '1',  flag: '🇺🇸', label: 'USA',   demo: '4697512039' },
+];
 
 export default function LoginScreen({ onLogin }) {
   const [step, setStep] = useState('phone'); // phone | otp | signup
   const [phone, setPhone] = useState('');
+  const [countryCode, setCountryCode] = useState('91');
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [signupName, setSignupName] = useState('');
   const [signupEmail, setSignupEmail] = useState('');
@@ -26,7 +30,7 @@ export default function LoginScreen({ onLogin }) {
     }
     setLoading(true);
     try {
-      await api.sendOTP(cleaned);
+      await api.sendOTP(cleaned, countryCode);
       setStep('otp');
       setTimeout(() => otpRefs.current[0]?.focus(), 200);
     } catch (e) {
@@ -41,7 +45,7 @@ export default function LoginScreen({ onLogin }) {
     if (code.length !== 6) return;
     setLoading(true);
     try {
-      const res = await api.verifyOTP(phone.replace(/\D/g, ''), code);
+      const res = await api.verifyOTP(phone.replace(/\D/g, ''), code, countryCode);
       await saveToken(res.token);
       const session = { phone: res.user.phone, name: res.user.name, id: res.user.id, token: res.token };
       if (res.isNew) {
@@ -94,12 +98,28 @@ export default function LoginScreen({ onLogin }) {
         <View style={styles.card}>
           {step === 'phone' && (
             <>
+              <Text style={styles.label}>Select Country</Text>
+              <View style={styles.countryRow}>
+                {COUNTRIES.map(c => (
+                  <TouchableOpacity
+                    key={c.code}
+                    onPress={() => { setCountryCode(c.code); setPhone(''); }}
+                    style={[styles.countryBtn, countryCode === c.code && styles.countryBtnActive]}
+                  >
+                    <Text style={[styles.countryBtnText, countryCode === c.code && styles.countryBtnTextActive]}>
+                      {c.flag} +{c.code} {c.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
               <Text style={styles.label}>Mobile Number</Text>
               <View style={styles.phoneRow}>
-                <View style={styles.countryCode}><Text style={styles.countryCodeText}>🇮🇳 +91</Text></View>
+                <View style={styles.countryCode}>
+                  <Text style={styles.countryCodeText}>{COUNTRIES.find(c=>c.code===countryCode)?.flag} +{countryCode}</Text>
+                </View>
                 <TextInput
                   style={styles.phoneInput}
-                  placeholder="98765 43210"
+                  placeholder={COUNTRIES.find(c=>c.code===countryCode)?.demo}
                   keyboardType="numeric"
                   maxLength={10}
                   value={phone}
@@ -112,14 +132,15 @@ export default function LoginScreen({ onLogin }) {
                 {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>Send OTP →</Text>}
               </TouchableOpacity>
               <View style={styles.demoBox}>
-                <Text style={styles.demoText}>Demo: <Text style={styles.demoBold}>9876543210</Text> · OTP: <Text style={styles.demoBold}>123456</Text></Text>
+                <Text style={styles.demoText}>Demo OTP: <Text style={styles.demoBold}>123456</Text></Text>
+                <Text style={styles.demoText}>🇮🇳 <Text style={styles.demoBold}>9876543210</Text>  ·  🇺🇸 <Text style={styles.demoBold}>4697512039</Text></Text>
               </View>
             </>
           )}
 
           {step === 'otp' && (
             <>
-              <Text style={styles.label}>Enter OTP sent to +91 {phone.slice(0,5)}XXXXX</Text>
+              <Text style={styles.label}>OTP sent to {COUNTRIES.find(c=>c.code===countryCode)?.flag} +{countryCode} {phone.slice(0,5)}XXXXX</Text>
               <View style={styles.otpRow}>
                 {otp.map((d, i) => (
                   <TextInput
@@ -191,6 +212,11 @@ const styles = StyleSheet.create({
   tagline: { fontSize: 14, color: '#6b7280', textAlign: 'center' },
   card: { backgroundColor: '#fff', borderRadius: 24, padding: 24, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 16, elevation: 4 },
   label: { fontSize: 12, fontWeight: '700', color: '#6b7280', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 },
+  countryRow: { flexDirection: 'row', gap: 8, marginBottom: 16 },
+  countryBtn: { flex: 1, paddingVertical: 10, paddingHorizontal: 8, borderRadius: 12, borderWidth: 2, borderColor: '#e5e7eb', alignItems: 'center' },
+  countryBtnActive: { borderColor: ORANGE, backgroundColor: '#fff7ed' },
+  countryBtnText: { fontSize: 13, fontWeight: '600', color: '#6b7280' },
+  countryBtnTextActive: { color: ORANGE },
   phoneRow: { flexDirection: 'row', borderWidth: 1.5, borderColor: '#e5e7eb', borderRadius: 14, overflow: 'hidden', marginBottom: 16 },
   countryCode: { backgroundColor: '#f9fafb', paddingHorizontal: 14, justifyContent: 'center', borderRightWidth: 1, borderRightColor: '#e5e7eb' },
   countryCodeText: { fontSize: 14, fontWeight: '600', color: '#374151' },

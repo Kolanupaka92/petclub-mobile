@@ -7,8 +7,8 @@ import { api, saveToken } from '../api';
 
 const ORANGE = '#f97316';
 const COUNTRIES = [
-  { code: '91', flag: '🇮🇳', label: 'India', demo: '9876543210' },
-  { code: '1',  flag: '🇺🇸', label: 'USA',   demo: '4697512039' },
+  { code: '91', flagUrl: 'https://flagcdn.com/20x15/in.png', label: 'India', demo: '9876543210' },
+  { code: '1',  flagUrl: 'https://flagcdn.com/20x15/us.png', label: 'USA',   demo: '4697512039' },
 ];
 
 export default function LoginScreen({ onLogin }) {
@@ -83,6 +83,8 @@ export default function LoginScreen({ onLogin }) {
     }
   };
 
+  const activeCountry = COUNTRIES.find(c => c.code === countryCode);
+
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
@@ -109,20 +111,25 @@ export default function LoginScreen({ onLogin }) {
                     onPress={() => { setCountryCode(c.code); setPhone(''); }}
                     style={[styles.countryBtn, countryCode === c.code && styles.countryBtnActive]}
                   >
-                    <Text style={[styles.countryBtnText, countryCode === c.code && styles.countryBtnTextActive]}>
-                      {c.flag} +{c.code} {c.label}
-                    </Text>
+                    <View style={styles.countryBtnInner}>
+                      <Image source={{ uri: c.flagUrl }} style={styles.flagImg} />
+                      <Text style={[styles.countryBtnText, countryCode === c.code && styles.countryBtnTextActive]}>
+                        +{c.code} {c.label}
+                      </Text>
+                    </View>
                   </TouchableOpacity>
                 ))}
               </View>
+
               <Text style={styles.label}>Mobile Number</Text>
               <View style={styles.phoneRow}>
                 <View style={styles.countryCode}>
-                  <Text style={styles.countryCodeText}>{COUNTRIES.find(c=>c.code===countryCode)?.flag} +{countryCode}</Text>
+                  <Image source={{ uri: activeCountry?.flagUrl }} style={styles.flagImg} />
+                  <Text style={styles.countryCodeText}> +{countryCode}</Text>
                 </View>
                 <TextInput
                   style={styles.phoneInput}
-                  placeholder={COUNTRIES.find(c=>c.code===countryCode)?.demo}
+                  placeholder={activeCountry?.demo}
                   keyboardType="numeric"
                   maxLength={10}
                   value={phone}
@@ -131,19 +138,31 @@ export default function LoginScreen({ onLogin }) {
                   returnKeyType="done"
                 />
               </View>
+
               <TouchableOpacity style={[styles.btn, loading && styles.btnDisabled]} onPress={sendOtp} disabled={loading}>
                 {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>Send OTP →</Text>}
               </TouchableOpacity>
+
               <View style={styles.demoBox}>
                 <Text style={styles.demoText}>Demo OTP: <Text style={styles.demoBold}>123456</Text></Text>
-                <Text style={styles.demoText}>🇮🇳 <Text style={styles.demoBold}>9876543210</Text>  ·  🇺🇸 <Text style={styles.demoBold}>4697512039</Text></Text>
+                <View style={styles.demoFlagRow}>
+                  <Image source={{ uri: 'https://flagcdn.com/20x15/in.png' }} style={styles.flagImg} />
+                  <Text style={[styles.demoText, styles.demoBold]}> 9876543210</Text>
+                  <Text style={styles.demoText}>  ·  </Text>
+                  <Image source={{ uri: 'https://flagcdn.com/20x15/us.png' }} style={styles.flagImg} />
+                  <Text style={[styles.demoText, styles.demoBold]}> 4697512039</Text>
+                </View>
               </View>
             </>
           )}
 
           {step === 'otp' && (
             <>
-              <Text style={styles.label}>OTP sent to {COUNTRIES.find(c=>c.code===countryCode)?.flag} +{countryCode} {phone.slice(0,5)}XXXXX</Text>
+              <View style={styles.otpLabelRow}>
+                <Text style={styles.label}>OTP sent to  </Text>
+                <Image source={{ uri: activeCountry?.flagUrl }} style={styles.flagImg} />
+                <Text style={styles.label}>  +{countryCode} {phone.slice(0, 5)}XXXXX</Text>
+              </View>
               <View style={styles.otpRow}>
                 {otp.map((d, i) => (
                   <TextInput
@@ -221,10 +240,12 @@ const styles = StyleSheet.create({
   countryRow: { flexDirection: 'row', gap: 8, marginBottom: 16 },
   countryBtn: { flex: 1, paddingVertical: 10, paddingHorizontal: 8, borderRadius: 12, borderWidth: 2, borderColor: '#e5e7eb', alignItems: 'center' },
   countryBtnActive: { borderColor: ORANGE, backgroundColor: '#fff7ed' },
+  countryBtnInner: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   countryBtnText: { fontSize: 13, fontWeight: '600', color: '#6b7280' },
   countryBtnTextActive: { color: ORANGE },
+  flagImg: { width: 20, height: 15, borderRadius: 2 },
   phoneRow: { flexDirection: 'row', borderWidth: 1.5, borderColor: '#e5e7eb', borderRadius: 14, overflow: 'hidden', marginBottom: 16 },
-  countryCode: { backgroundColor: '#f9fafb', paddingHorizontal: 14, justifyContent: 'center', borderRightWidth: 1, borderRightColor: '#e5e7eb' },
+  countryCode: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f9fafb', paddingHorizontal: 14, borderRightWidth: 1, borderRightColor: '#e5e7eb' },
   countryCodeText: { fontSize: 14, fontWeight: '600', color: '#374151' },
   phoneInput: { flex: 1, paddingHorizontal: 14, paddingVertical: 14, fontSize: 16 },
   input: { borderWidth: 1.5, borderColor: '#e5e7eb', borderRadius: 14, paddingHorizontal: 14, paddingVertical: 14, fontSize: 16, marginBottom: 16 },
@@ -234,6 +255,8 @@ const styles = StyleSheet.create({
   demoBox: { marginTop: 16, backgroundColor: '#fff7ed', borderRadius: 12, padding: 12, borderWidth: 1, borderColor: '#fed7aa' },
   demoText: { fontSize: 12, color: '#92400e', textAlign: 'center' },
   demoBold: { fontWeight: '700', fontFamily: 'monospace' },
+  demoFlagRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 4 },
+  otpLabelRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', marginBottom: 8 },
   otpRow: { flexDirection: 'row', justifyContent: 'center', gap: 8, marginBottom: 20 },
   otpBox: { width: 46, height: 52, borderWidth: 2, borderColor: '#e5e7eb', borderRadius: 12, textAlign: 'center', fontSize: 20, fontWeight: '700' },
   otpBoxFilled: { borderColor: ORANGE, backgroundColor: '#fff7ed' },

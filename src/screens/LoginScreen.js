@@ -6,31 +6,25 @@ import {
 import { api, saveToken } from '../api';
 
 const ORANGE = '#f97316';
-const COUNTRIES = [
-  { code: '91', flagUrl: 'https://flagcdn.com/20x15/in.png', label: 'India', demo: '9876543210' },
-  { code: '1',  flagUrl: 'https://flagcdn.com/20x15/us.png', label: 'USA',   demo: '4697512039' },
-];
 
 export default function LoginScreen({ onLogin }) {
-  const [step, setStep] = useState('phone'); // phone | otp | signup
-  const [phone, setPhone] = useState('');
-  const [countryCode, setCountryCode] = useState('91');
+  const [step, setStep] = useState('email');  // email | otp | signup
+  const [email, setEmail] = useState('');
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [signupName, setSignupName] = useState('');
-  const [signupEmail, setSignupEmail] = useState('');
   const [pendingSession, setPendingSession] = useState(null);
   const [loading, setLoading] = useState(false);
   const otpRefs = useRef([]);
 
   const sendOtp = async () => {
-    const cleaned = phone.replace(/\D/g, '');
-    if (cleaned.length !== 10) {
-      Alert.alert('Invalid number', 'Please enter a valid 10-digit mobile number.');
+    const trimmed = email.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/.test(trimmed)) {
+      Alert.alert('Invalid email', 'Please enter a valid email address.');
       return;
     }
     setLoading(true);
     try {
-      await api.sendOTP(cleaned, countryCode);
+      await api.sendEmailOTP(trimmed);
       setStep('otp');
       setTimeout(() => otpRefs.current[0]?.focus(), 200);
     } catch (e) {
@@ -45,9 +39,9 @@ export default function LoginScreen({ onLogin }) {
     if (code.length !== 6) return;
     setLoading(true);
     try {
-      const res = await api.verifyOTP(phone.replace(/\D/g, ''), code, countryCode);
+      const res = await api.verifyEmailOTP(email.trim().toLowerCase(), code);
       await saveToken(res.token);
-      const session = { phone: res.user.phone, name: res.user.name, id: res.user.id, token: res.token };
+      const session = { email: res.user.email, name: res.user.name, id: res.user.id, token: res.token };
       if (res.isNew) {
         setPendingSession(session);
         setStep('signup');
@@ -74,7 +68,7 @@ export default function LoginScreen({ onLogin }) {
     if (!signupName.trim()) { Alert.alert('Name required', 'Please enter your name'); return; }
     setLoading(true);
     try {
-      await api.updateMe({ name: signupName.trim(), email: signupEmail.trim() || undefined });
+      await api.updateMe({ name: signupName.trim() });
       onLogin({ ...pendingSession, name: signupName.trim() });
     } catch {
       onLogin({ ...pendingSession, name: signupName.trim() });
@@ -82,8 +76,6 @@ export default function LoginScreen({ onLogin }) {
       setLoading(false);
     }
   };
-
-  const activeCountry = COUNTRIES.find(c => c.code === countryCode);
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -95,73 +87,52 @@ export default function LoginScreen({ onLogin }) {
             <Text style={styles.logo}>PET<Text style={styles.logoOrange}>club</Text></Text>
           </View>
           <Text style={styles.tagline}>
-            {step === 'phone' ? 'Sign in or create account' : step === 'otp' ? 'Enter verification code' : 'Complete your profile'}
+            {step === 'email'  ? 'Sign in or create account'  :
+             step === 'otp'    ? 'Enter verification code'    :
+                                 'Complete your profile'}
           </Text>
         </View>
 
         {/* Card */}
         <View style={styles.card}>
-          {step === 'phone' && (
-            <>
-              <Text style={styles.label}>Select Country</Text>
-              <View style={styles.countryRow}>
-                {COUNTRIES.map(c => (
-                  <TouchableOpacity
-                    key={c.code}
-                    onPress={() => { setCountryCode(c.code); setPhone(''); }}
-                    style={[styles.countryBtn, countryCode === c.code && styles.countryBtnActive]}
-                  >
-                    <View style={styles.countryBtnInner}>
-                      <Image source={{ uri: c.flagUrl }} style={styles.flagImg} />
-                      <Text style={[styles.countryBtnText, countryCode === c.code && styles.countryBtnTextActive]}>
-                        +{c.code} {c.label}
-                      </Text>
-                    </View>
-                  </TouchableOpacity>
-                ))}
-              </View>
 
-              <Text style={styles.label}>Mobile Number</Text>
-              <View style={styles.phoneRow}>
-                <View style={styles.countryCode}>
-                  <Image source={{ uri: activeCountry?.flagUrl }} style={styles.flagImg} />
-                  <Text style={styles.countryCodeText}> +{countryCode}</Text>
-                </View>
-                <TextInput
-                  style={styles.phoneInput}
-                  placeholder={activeCountry?.demo}
-                  keyboardType="numeric"
-                  maxLength={10}
-                  value={phone}
-                  onChangeText={t => setPhone(t.replace(/\D/g, '').slice(0, 10))}
-                  onSubmitEditing={sendOtp}
-                  returnKeyType="done"
-                />
-              </View>
+          {/* ── STEP: EMAIL ── */}
+          {step === 'email' && (
+            <>
+              <Text style={styles.label}>Email Address</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="you@example.com"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoComplete="email"
+                value={email}
+                onChangeText={setEmail}
+                onSubmitEditing={sendOtp}
+                returnKeyType="done"
+              />
 
               <TouchableOpacity style={[styles.btn, loading && styles.btnDisabled]} onPress={sendOtp} disabled={loading}>
-                {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>Send OTP →</Text>}
+                {loading
+                  ? <ActivityIndicator color="#fff" />
+                  : <Text style={styles.btnText}>Send OTP →</Text>}
               </TouchableOpacity>
 
               <View style={styles.demoBox}>
-                <Text style={styles.demoText}>Demo OTP: <Text style={styles.demoBold}>123456</Text></Text>
-                <View style={styles.demoFlagRow}>
-                  <Image source={{ uri: 'https://flagcdn.com/20x15/in.png' }} style={styles.flagImg} />
-                  <Text style={[styles.demoText, styles.demoBold]}> 9876543210</Text>
-                  <Text style={styles.demoText}>  ·  </Text>
-                  <Image source={{ uri: 'https://flagcdn.com/20x15/us.png' }} style={styles.flagImg} />
-                  <Text style={[styles.demoText, styles.demoBold]}> 4697512039</Text>
-                </View>
+                <Text style={styles.demoText}>
+                  📧 A 6-digit OTP will be sent to your email.{'\n'}
+                  <Text style={styles.demoBold}>Demo OTP: 123456</Text>
+                </Text>
               </View>
             </>
           )}
 
+          {/* ── STEP: OTP ── */}
           {step === 'otp' && (
             <>
               <View style={styles.otpLabelRow}>
                 <Text style={styles.label}>OTP sent to  </Text>
-                <Image source={{ uri: activeCountry?.flagUrl }} style={styles.flagImg} />
-                <Text style={styles.label}>  +{countryCode} {phone.slice(0, 5)}XXXXX</Text>
+                <Text style={styles.label}>{email}</Text>
               </View>
               <View style={styles.otpRow}>
                 {otp.map((d, i) => (
@@ -180,10 +151,12 @@ export default function LoginScreen({ onLogin }) {
                 ))}
               </View>
               <TouchableOpacity style={[styles.btn, loading && styles.btnDisabled]} onPress={() => verifyOtp()} disabled={loading}>
-                {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>Verify & Sign In 🐾</Text>}
+                {loading
+                  ? <ActivityIndicator color="#fff" />
+                  : <Text style={styles.btnText}>Verify & Sign In 🐾</Text>}
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => { setStep('phone'); setOtp(['','','','','','']); }} style={styles.linkBtn}>
-                <Text style={styles.linkText}>← Change number</Text>
+              <TouchableOpacity onPress={() => { setStep('email'); setOtp(['','','','','','']); }} style={styles.linkBtn}>
+                <Text style={styles.linkText}>← Change email</Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={sendOtp} style={styles.linkBtn}>
                 <Text style={styles.linkTextGray}>Resend OTP</Text>
@@ -191,6 +164,7 @@ export default function LoginScreen({ onLogin }) {
             </>
           )}
 
+          {/* ── STEP: SIGNUP ── */}
           {step === 'signup' && (
             <>
               <Text style={styles.label}>Your Name *</Text>
@@ -201,17 +175,10 @@ export default function LoginScreen({ onLogin }) {
                 onChangeText={setSignupName}
                 autoComplete="name"
               />
-              <Text style={styles.label}>Email (optional)</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="you@example.com"
-                value={signupEmail}
-                onChangeText={setSignupEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
               <TouchableOpacity style={[styles.btn, loading && styles.btnDisabled]} onPress={handleSignup} disabled={loading}>
-                {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>Let's Go 🐾</Text>}
+                {loading
+                  ? <ActivityIndicator color="#fff" />
+                  : <Text style={styles.btnText}>Let's Go 🐾</Text>}
               </TouchableOpacity>
               <TouchableOpacity onPress={() => onLogin(pendingSession)} style={styles.linkBtn}>
                 <Text style={styles.linkTextGray}>Skip for now</Text>
@@ -220,48 +187,36 @@ export default function LoginScreen({ onLogin }) {
           )}
         </View>
 
-        <Text style={styles.terms}>By continuing, you agree to PETclub&apos;s Terms of Service and Privacy Policy.</Text>
+        <Text style={styles.terms}>By continuing, you agree to PETclub's Terms of Service and Privacy Policy.</Text>
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff7ed' },
-  scroll: { flexGrow: 1, justifyContent: 'center', padding: 20 },
-  header: { alignItems: 'center', marginBottom: 32 },
-  logoRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 },
-  logoIcon: { width: 40, height: 40, borderRadius: 9 },
-  logo: { fontSize: 28, fontWeight: '900', color: '#1f2937' },
-  logoOrange: { color: '#f97316' },
-  tagline: { fontSize: 14, color: '#6b7280', textAlign: 'center' },
-  card: { backgroundColor: '#fff', borderRadius: 24, padding: 24, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 16, elevation: 4 },
-  label: { fontSize: 12, fontWeight: '700', color: '#6b7280', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 },
-  countryRow: { flexDirection: 'row', gap: 8, marginBottom: 16 },
-  countryBtn: { flex: 1, paddingVertical: 10, paddingHorizontal: 8, borderRadius: 12, borderWidth: 2, borderColor: '#e5e7eb', alignItems: 'center' },
-  countryBtnActive: { borderColor: ORANGE, backgroundColor: '#fff7ed' },
-  countryBtnInner: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  countryBtnText: { fontSize: 13, fontWeight: '600', color: '#6b7280' },
-  countryBtnTextActive: { color: ORANGE },
-  flagImg: { width: 20, height: 15, borderRadius: 2 },
-  phoneRow: { flexDirection: 'row', borderWidth: 1.5, borderColor: '#e5e7eb', borderRadius: 14, overflow: 'hidden', marginBottom: 16 },
-  countryCode: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f9fafb', paddingHorizontal: 14, borderRightWidth: 1, borderRightColor: '#e5e7eb' },
-  countryCodeText: { fontSize: 14, fontWeight: '600', color: '#374151' },
-  phoneInput: { flex: 1, paddingHorizontal: 14, paddingVertical: 14, fontSize: 16 },
-  input: { borderWidth: 1.5, borderColor: '#e5e7eb', borderRadius: 14, paddingHorizontal: 14, paddingVertical: 14, fontSize: 16, marginBottom: 16 },
-  btn: { backgroundColor: ORANGE, borderRadius: 16, paddingVertical: 16, alignItems: 'center', marginTop: 4 },
-  btnDisabled: { opacity: 0.6 },
-  btnText: { color: '#fff', fontSize: 16, fontWeight: '800' },
-  demoBox: { marginTop: 16, backgroundColor: '#fff7ed', borderRadius: 12, padding: 12, borderWidth: 1, borderColor: '#fed7aa' },
-  demoText: { fontSize: 12, color: '#92400e', textAlign: 'center' },
-  demoBold: { fontWeight: '700', fontFamily: 'monospace' },
-  demoFlagRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 4 },
-  otpLabelRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', marginBottom: 8 },
-  otpRow: { flexDirection: 'row', justifyContent: 'center', gap: 8, marginBottom: 20 },
-  otpBox: { width: 46, height: 52, borderWidth: 2, borderColor: '#e5e7eb', borderRadius: 12, textAlign: 'center', fontSize: 20, fontWeight: '700' },
-  otpBoxFilled: { borderColor: ORANGE, backgroundColor: '#fff7ed' },
-  linkBtn: { alignItems: 'center', paddingVertical: 10 },
-  linkText: { color: ORANGE, fontWeight: '700', fontSize: 14 },
-  linkTextGray: { color: '#9ca3af', fontSize: 13 },
-  terms: { textAlign: 'center', fontSize: 11, color: '#9ca3af', marginTop: 24, paddingHorizontal: 20 },
+  container:       { flex: 1, backgroundColor: '#fff7ed' },
+  scroll:          { flexGrow: 1, justifyContent: 'center', padding: 20 },
+  header:          { alignItems: 'center', marginBottom: 32 },
+  logoRow:         { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 },
+  logoIcon:        { width: 40, height: 40, borderRadius: 9 },
+  logo:            { fontSize: 28, fontWeight: '900', color: '#1f2937' },
+  logoOrange:      { color: '#f97316' },
+  tagline:         { fontSize: 14, color: '#6b7280', textAlign: 'center' },
+  card:            { backgroundColor: '#fff', borderRadius: 24, padding: 24, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 16, elevation: 4 },
+  label:           { fontSize: 12, fontWeight: '700', color: '#6b7280', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 },
+  input:           { borderWidth: 1.5, borderColor: '#e5e7eb', borderRadius: 14, paddingHorizontal: 14, paddingVertical: 14, fontSize: 16, marginBottom: 16 },
+  btn:             { backgroundColor: ORANGE, borderRadius: 16, paddingVertical: 16, alignItems: 'center', marginTop: 4 },
+  btnDisabled:     { opacity: 0.6 },
+  btnText:         { color: '#fff', fontSize: 16, fontWeight: '800' },
+  demoBox:         { marginTop: 16, backgroundColor: '#fff7ed', borderRadius: 12, padding: 12, borderWidth: 1, borderColor: '#fed7aa' },
+  demoText:        { fontSize: 12, color: '#92400e', textAlign: 'center' },
+  demoBold:        { fontWeight: '700', fontFamily: 'monospace' },
+  otpLabelRow:     { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', marginBottom: 8 },
+  otpRow:          { flexDirection: 'row', justifyContent: 'center', gap: 8, marginBottom: 20 },
+  otpBox:          { width: 46, height: 52, borderWidth: 2, borderColor: '#e5e7eb', borderRadius: 12, textAlign: 'center', fontSize: 20, fontWeight: '700' },
+  otpBoxFilled:    { borderColor: ORANGE, backgroundColor: '#fff7ed' },
+  linkBtn:         { alignItems: 'center', paddingVertical: 10 },
+  linkText:        { color: ORANGE, fontWeight: '700', fontSize: 14 },
+  linkTextGray:    { color: '#9ca3af', fontSize: 13 },
+  terms:           { textAlign: 'center', fontSize: 11, color: '#9ca3af', marginTop: 24, paddingHorizontal: 20 },
 });

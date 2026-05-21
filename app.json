@@ -4,22 +4,28 @@
     "slug": "petclub-app",
     "version": "1.0.0",
     "orientation": "portrait",
+    "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "splash": {
+      "image": "./assets/icon.png",
+      "resizeMode": "contain",
       "backgroundColor": "#f97316"
     },
     "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "in.petclub.app"
+      "bundleIdentifier": "in.petclub.app",
+      "icon": "./assets/icon.png"
     },
     "android": {
       "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#f97316"
       },
       "package": "in.petclub.app"
     },
     "web": {
+      "favicon": "./assets/favicon.png",
       "bundler": "metro"
     }
   }

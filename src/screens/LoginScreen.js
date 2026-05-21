@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
-  ScrollView, ActivityIndicator, Alert, KeyboardAvoidingView, Platform,
+  ScrollView, ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Image,
 } from 'react-native';
 import { api, saveToken } from '../api';
 
@@ -88,7 +88,10 @@ export default function LoginScreen({ onLogin }) {
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.logo}>🐾 PETclub</Text>
+          <View style={styles.logoRow}>
+            <Image source={require('../../../assets/icon.png')} style={styles.logoIcon} />
+            <Text style={styles.logo}>PET<Text style={styles.logoOrange}>club</Text></Text>
+          </View>
           <Text style={styles.tagline}>
             {step === 'phone' ? 'Sign in or create account' : step === 'otp' ? 'Enter verification code' : 'Complete your profile'}
           </Text>
@@ -208,7 +211,10 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff7ed' },
   scroll: { flexGrow: 1, justifyContent: 'center', padding: 20 },
   header: { alignItems: 'center', marginBottom: 32 },
-  logo: { fontSize: 32, fontWeight: '900', color: '#1f2937', marginBottom: 6 },
+  logoRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 },
+  logoIcon: { width: 40, height: 40, borderRadius: 9 },
+  logo: { fontSize: 28, fontWeight: '900', color: '#1f2937' },
+  logoOrange: { color: '#f97316' },
   tagline: { fontSize: 14, color: '#6b7280', textAlign: 'center' },
   card: { backgroundColor: '#fff', borderRadius: 24, padding: 24, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 16, elevation: 4 },
   label: { fontSize: 12, fontWeight: '700', color: '#6b7280', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 },

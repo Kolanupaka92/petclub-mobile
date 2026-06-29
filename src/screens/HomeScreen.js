@@ -21,7 +21,7 @@ export default function HomeScreen({ session, navigation }) {
             <Text style={styles.greeting}>Hey {firstName}! 🐾</Text>
             <Text style={styles.subGreeting}>What does your pet need today?</Text>
           </View>
-          <TouchableOpacity style={styles.profileBtn} onPress={() => navigation.navigate('Profile')}>
+          <TouchableOpacity style={styles.profileBtn} onPress={() => navigation.getParent()?.navigate('Profile')}>
             <Text style={styles.profileInitial}>{firstName[0]?.toUpperCase()}</Text>
           </TouchableOpacity>
         </View>
@@ -50,7 +50,7 @@ export default function HomeScreen({ session, navigation }) {
         {/* Quick actions */}
         <Text style={styles.sectionTitle}>Quick Actions</Text>
         <View style={styles.quickActions}>
-          <TouchableOpacity style={styles.quickBtn} onPress={() => navigation.navigate('Pets')}>
+          <TouchableOpacity style={styles.quickBtn} onPress={() => navigation.getParent()?.navigate('Pets')}>
             <Text style={styles.quickBtnIcon}>🐕</Text>
             <Text style={styles.quickBtnText}>My Pets</Text>
           </TouchableOpacity>

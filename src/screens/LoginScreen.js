@@ -40,8 +40,9 @@ export default function LoginScreen({ onLogin }) {
     setLoading(true);
     try {
       const res = await api.verifyEmailOTP(email.trim().toLowerCase(), code);
-      await saveToken(res.token);
-      const session = { email: res.user.email, name: res.user.name, id: res.user.id, token: res.token };
+      if (!res.token) throw new Error('Authentication failed. Please try again.');
+      await saveToken(res.token, res.refreshToken);
+      const session = { email: res.user.email, name: res.user.name, id: res.user.id, role: res.user.role, token: res.token };
       if (res.isNew) {
         setPendingSession(session);
         setStep('signup');
@@ -120,8 +121,7 @@ export default function LoginScreen({ onLogin }) {
 
               <View style={styles.demoBox}>
                 <Text style={styles.demoText}>
-                  📧 A 6-digit OTP will be sent to your email.{'\n'}
-                  <Text style={styles.demoBold}>Demo OTP: 123456</Text>
+                  📧 A 6-digit OTP will be sent to your email.
                 </Text>
               </View>
             </>
@@ -210,7 +210,6 @@ const styles = StyleSheet.create({
   btnText:         { color: '#fff', fontSize: 16, fontWeight: '800' },
   demoBox:         { marginTop: 16, backgroundColor: '#fff7ed', borderRadius: 12, padding: 12, borderWidth: 1, borderColor: '#fed7aa' },
   demoText:        { fontSize: 12, color: '#92400e', textAlign: 'center' },
-  demoBold:        { fontWeight: '700', fontFamily: 'monospace' },
   otpLabelRow:     { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', marginBottom: 8 },
   otpRow:          { flexDirection: 'row', justifyContent: 'center', gap: 8, marginBottom: 20 },
   otpBox:          { width: 46, height: 52, borderWidth: 2, borderColor: '#e5e7eb', borderRadius: 12, textAlign: 'center', fontSize: 20, fontWeight: '700' },

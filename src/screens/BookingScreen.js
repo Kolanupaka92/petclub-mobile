@@ -16,7 +16,7 @@ export default function BookingScreen({ route, navigation }) {
           <Text style={styles.cardText}>
             Live booking with real-time tracking is launching soon.{'\n\n'}
             For now, use the web app at{'\n'}
-            <Text style={styles.link}>localhost:5175</Text>
+            <Text style={styles.link}>app.mypetclub.app</Text>
           </Text>
         </View>
         <TouchableOpacity style={styles.btn} onPress={() => navigation.goBack()}>

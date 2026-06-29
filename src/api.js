@@ -32,7 +32,7 @@ const _silentRefresh = async () => {
 };
 
 const req = async (method, path, body, requireAuth = false, _refreshed = false) => {
-  const headers = { 'Content-Type': 'application/json' };
+  const headers = { 'Content-Type': 'application/json', 'X-Client-Type': 'mobile' };
   if (requireAuth) {
     const token = await getToken();
     if (token) headers['Authorization'] = `Bearer ${token}`;

@@ -1,3 +1,4 @@
+// Author: Sai Kolanupaka
 import * as SecureStore from 'expo-secure-store';
 
 const BASE = __DEV__ ? 'http://localhost:5001/api' : 'https://api.mypetclub.app/api';

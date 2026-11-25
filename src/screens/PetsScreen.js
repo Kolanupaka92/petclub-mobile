@@ -1,3 +1,4 @@
+// Author: Sai Kolanupaka
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, SafeAreaView, ActivityIndicator } from 'react-native';
 import { api } from '../api';

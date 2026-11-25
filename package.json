@@ -1,6 +1,7 @@
 {
   "name": "petclub-mobile",
   "version": "1.0.0",
+  "author": "Sai Kolanupaka",
   "main": "expo-router/entry",
   "scripts": {
     "start": "expo start",

@@ -1,3 +1,4 @@
+// Author: Sai Kolanupaka
 import React from 'react';
 import { View, Text, TouchableOpacity, SafeAreaView } from 'react-native';
 

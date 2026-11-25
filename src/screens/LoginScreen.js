@@ -1,3 +1,4 @@
+// Author: Sai Kolanupaka
 import React, { useState, useRef } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
